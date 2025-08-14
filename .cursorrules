@@ -1,0 +1,293 @@
+# Wikipedia MCP Server Rules
+
+## 🎯 Purpose
+This document provides implementation guidelines and rules for maintaining and extending the **Wikipedia MCP Server**. This server provides comprehensive access to Wikipedia content through the Model Context Protocol.
+
+## 📋 Server Overview
+
+### Package Structure
+- **Package Name:** `wikipedia-mcp-server`
+- **Folder Name:** `wikipedia_mcp_server`
+- **Server Name:** `WikipediaMCP`
+- **Entry Point:** `wikipedia-mcp-server = "wikipedia_mcp_server.__main__:main"`
+
+### Dependencies
+- `mcp>=1.6.0` - MCP protocol implementation
+- `wikipedia-api>=0.6.0` - Wikipedia API client library
+- `requests>=2.31.0` - HTTP client for API calls
+- `jsonschema>=4.0.0` - Schema validation
+
+## 🛠️ Implemented Tools
+
+The server provides 10 Wikipedia tools with complete input/output validation:
+
+### 1. `search_wikipedia`
+- **Purpose:** Search Wikipedia for articles matching a query
+- **Input:** query (string), limit (integer, 1-50, default: 10)
+- **Output:** query, results array with title, snippet, pageid, wordcount, timestamp
+
+### 2. `get_article`
+- **Purpose:** Get full content of a Wikipedia article
+- **Input:** title (string)
+- **Output:** title, pageid, summary, text, url, sections, categories, links, exists
+
+### 3. `get_summary`
+- **Purpose:** Get summary of a Wikipedia article
+- **Input:** title (string)
+- **Output:** title, summary
+
+### 4. `summarize_article_for_query`
+- **Purpose:** Get query-focused summary of an article
+- **Input:** title (string), query (string), max_length (integer, 50-1000, default: 250)
+- **Output:** title, query, summary
+
+### 5. `summarize_article_section`
+- **Purpose:** Get summary of a specific article section
+- **Input:** title (string), section_title (string), max_length (integer, 50-500, default: 150)
+- **Output:** title, section_title, summary
+
+### 6. `extract_key_facts`
+- **Purpose:** Extract key facts from an article
+- **Input:** title (string), topic_within_article (string, optional), count (integer, 1-20, default: 5)
+- **Output:** title, topic_within_article, facts array
+
+### 7. `get_related_topics`
+- **Purpose:** Get related topics based on links and categories
+- **Input:** title (string), limit (integer, 1-50, default: 10)
+- **Output:** title, related_topics array with title, summary, url, type
+
+### 8. `get_sections`
+- **Purpose:** Get sections structure of an article
+- **Input:** title (string)
+- **Output:** title, sections array with title, level, text, nested sections
+
+### 9. `get_links`
+- **Purpose:** Get links contained within an article
+- **Input:** title (string)
+- **Output:** title, links array
+
+### 10. `get_coordinates`
+- **Purpose:** Get geographic coordinates of an article
+- **Input:** title (string)
+- **Output:** title, pageid, coordinates array, exists, error, message
+
+## 📁 File Structure & Responsibilities
+
+### Core Files (DO NOT MODIFY without good reason)
+- `wikipedia_mcp_server/__init__.py` - Package initialization
+- `wikipedia_mcp_server/__main__.py` - Entry point
+- `wikipedia_mcp_server/server.py` - MCP server implementation
+- `main.py` - Testing compatibility wrapper
+- `test_server.py` - Test framework
+
+### Implementation Files (MAINTAIN and EXTEND)
+- `wikipedia_mcp_server/handlers.py` - Tool function implementations
+- `wikipedia_mcp_server/tools.json` - Tool schema definitions
+- `wikipedia_mcp_server/wikipedia_client.py` - Wikipedia API client
+- `test_cases.json` - Test case definitions
+- `pyproject.toml` - Project configuration
+
+## 🔧 Development Guidelines
+
+### 1. Schema Definition Rules
+- **NEVER stringify schemas** - Always use proper dict/object format
+- **Always validate inputs** - Check required parameters and ranges
+- **Match output schemas exactly** - Ensure responses match defined structure
+- **Use proper JSON Schema types** - string, integer, number, boolean, object, array
+
+### 2. Tool Implementation Pattern
+Always follow this structure in `handlers.py`:
+```python
+async def tool_function(param1: str, param2: int = None) -> Dict[str, Any]:
+    """Tool description with proper error handling."""
+    # 1. Input validation
+    if not param1:
+        raise ValueError("param1 is required")
+    
+    # 2. Process request using wikipedia_client
+    result = wikipedia_client.method(param1, param2)
+    
+    # 3. Return structured response matching outputSchema
+    return {"field": "value"}  # Must match outputSchema exactly
+```
+
+### 3. Error Handling
+- **Validate all inputs** before processing
+- **Use meaningful error messages** for validation failures
+- **Handle Wikipedia API errors gracefully**
+- **Return structured error responses** when appropriate
+
+### 4. Testing Requirements
+- **Add test cases** for any new tools in `test_cases.json`
+- **Include both success and failure scenarios**
+- **Test parameter validation** (missing required, invalid ranges)
+- **Verify output schema compliance**
+- **Run full test suite** before committing: `uv run python test_server.py`
+
+## 🧪 Testing Framework
+
+### Test Categories
+1. **Schema Validation** - Validates tool schema structure
+2. **Input Validation** - Tests parameter constraints
+3. **Output Validation** - Verifies response schema compliance
+4. **Error Handling** - Tests invalid inputs and edge cases
+5. **Integration** - Tests actual Wikipedia API calls
+
+### Running Tests
+```bash
+# Run all tests with comprehensive validation
+uv run python test_server.py
+
+# Current test status: 31 test cases, 100% pass rate
+```
+
+## 📊 Schema Validation Rules
+
+### Input Schema Requirements
+- All required parameters must be marked in `required` array
+- Optional parameters should have `default` values where appropriate
+- Use parameter constraints (minimum, maximum, minLength, maxLength)
+- Provide clear descriptions for all parameters
+
+### Output Schema Requirements
+- Define exact structure of response objects
+- Use nullable types (`["type", "null"]`) for optional fields
+- Include all possible response fields
+- Match implementation output exactly
+
+### Example Schema Structure
+```json
+{
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "description": "Wikipedia article title"
+      },
+      "limit": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 50,
+        "default": 10
+      }
+    },
+    "required": ["title"]
+  },
+  "outputSchema": {
+    "type": "object",
+    "properties": {
+      "title": { "type": "string" },
+      "data": { "type": "array" }
+    }
+  }
+}
+```
+
+## 🚫 Common Mistakes to Avoid
+
+### ❌ DON'T:
+1. **Stringify schemas** - Use dict/object format only
+2. **Skip input validation** - Always validate parameters
+3. **Ignore output schema** - Must match exactly
+4. **Modify core server files** unnecessarily
+5. **Break existing tool interfaces** - Maintain backward compatibility
+
+### ✅ DO:
+1. **Follow established patterns** - Use existing tools as examples
+2. **Validate thoroughly** - Input, output, and error cases
+3. **Use type hints** - Python type annotations throughout
+4. **Handle errors gracefully** - Meaningful error messages
+5. **Test comprehensively** - Cover all scenarios
+
+## 🔍 Wikipedia Client Usage
+
+The `WikipediaClient` class provides:
+- **Language support** - Multiple Wikipedia language editions
+- **Country mapping** - Automatic language resolution from country codes
+- **Caching** - Optional result caching for performance
+- **Error handling** - Graceful handling of API errors
+- **Rate limiting** - Respectful API usage
+
+### Client Methods
+- `search(query, limit)` - Search for articles
+- `get_article(title)` - Get full article content
+- `get_summary(title)` - Get article summary
+- `get_sections(title)` - Get article sections
+- `get_links(title)` - Get article links
+- `get_coordinates(title)` - Get geographic coordinates
+- `get_related_topics(title, limit)` - Get related topics
+- `summarize_for_query(title, query, max_length)` - Query-focused summary
+- `summarize_section(title, section_title, max_length)` - Section summary
+- `extract_facts(title, topic, count)` - Extract key facts
+
+## 📦 Package Management
+
+### Dependencies
+- Keep dependencies minimal and focused
+- Pin major versions for stability
+- Document any new dependencies
+- Update `pyproject.toml` when adding dependencies
+
+### Versioning
+- Follow semantic versioning (MAJOR.MINOR.PATCH)
+- Update version in `pyproject.toml` for releases
+- Document breaking changes in version notes
+
+## 🔧 Extending the Server
+
+### Adding New Tools
+1. **Define schema** in `tools.json`
+2. **Implement function** in `handlers.py`
+3. **Add to TOOL_FUNCTIONS** mapping
+4. **Write test cases** in `test_cases.json`
+5. **Run tests** to verify implementation
+6. **Update documentation** if needed
+
+### Modifying Existing Tools
+1. **Maintain backward compatibility** where possible
+2. **Update schema** if input/output changes
+3. **Update test cases** to cover changes
+4. **Verify all tests pass**
+5. **Document breaking changes**
+
+## 🚀 Deployment & Usage
+
+### MCP Client Configuration
+```json
+{
+  "mcpServers": {
+    "wikipedia": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/yourusername/wikipedia-mcp-server",
+        "wikipedia-mcp-server"
+      ]
+    }
+  }
+}
+```
+
+### Local Development
+```bash
+# Install dependencies
+uv sync
+
+# Run tests
+uv run python test_server.py
+
+# Start server for testing
+uv run python main.py
+```
+
+## 📚 Resources
+
+- [MCP Specification](https://github.com/modelcontextprotocol)
+- [Wikipedia API Documentation](https://www.mediawiki.org/wiki/API:Main_page)
+- [JSON Schema Documentation](https://json-schema.org/)
+- [Python AsyncIO Guide](https://docs.python.org/3/library/asyncio.html)
+
+---
+
+**Remember:** This is a production Wikipedia MCP server with 100% test coverage. Maintain quality standards when extending or modifying functionality.

@@ -1,0 +1,316 @@
+{
+  "test_cases": [
+    {
+      "name": "test_search_wikipedia_success",
+      "tool": "search_wikipedia",
+      "arguments": {
+        "query": "Python programming language",
+        "limit": 5
+      },
+      "description": "Test successful Wikipedia search",
+      "expected_fields": ["query", "results"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_search_wikipedia_no_query",
+      "tool": "search_wikipedia",
+      "arguments": {},
+      "description": "Test search without required query parameter",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_search_wikipedia_invalid_limit",
+      "tool": "search_wikipedia",
+      "arguments": {
+        "query": "test",
+        "limit": 100
+      },
+      "description": "Test search with invalid limit parameter",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_get_article_success",
+      "tool": "get_article",
+      "arguments": {
+        "title": "Python (programming language)"
+      },
+      "description": "Test successful article retrieval",
+      "expected_fields": ["title", "exists"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_get_article_no_title",
+      "tool": "get_article",
+      "arguments": {},
+      "description": "Test article retrieval without title parameter",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_get_article_nonexistent",
+      "tool": "get_article",
+      "arguments": {
+        "title": "ThisPageDoesNotExist12345"
+      },
+      "description": "Test article retrieval for non-existent page",
+      "expected_fields": ["title", "exists"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_get_summary_success",
+      "tool": "get_summary",
+      "arguments": {
+        "title": "Albert Einstein"
+      },
+      "description": "Test successful summary retrieval",
+      "expected_fields": ["title", "summary"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_get_summary_no_title",
+      "tool": "get_summary",
+      "arguments": {},
+      "description": "Test summary retrieval without title parameter",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_summarize_article_for_query_success",
+      "tool": "summarize_article_for_query",
+      "arguments": {
+        "title": "Albert Einstein",
+        "query": "relativity",
+        "max_length": 200
+      },
+      "description": "Test successful query-focused summary",
+      "expected_fields": ["title", "query", "summary"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_summarize_article_for_query_no_title",
+      "tool": "summarize_article_for_query",
+      "arguments": {
+        "query": "relativity"
+      },
+      "description": "Test query-focused summary without title",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_summarize_article_for_query_no_query",
+      "tool": "summarize_article_for_query",
+      "arguments": {
+        "title": "Albert Einstein"
+      },
+      "description": "Test query-focused summary without query",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_summarize_article_for_query_invalid_length",
+      "tool": "summarize_article_for_query",
+      "arguments": {
+        "title": "Albert Einstein",
+        "query": "relativity",
+        "max_length": 2000
+      },
+      "description": "Test query-focused summary with invalid max_length",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_summarize_article_section_success",
+      "tool": "summarize_article_section",
+      "arguments": {
+        "title": "Albert Einstein",
+        "section_title": "Early life and education",
+        "max_length": 100
+      },
+      "description": "Test successful section summary",
+      "expected_fields": ["title", "section_title", "summary"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_summarize_article_section_no_title",
+      "tool": "summarize_article_section",
+      "arguments": {
+        "section_title": "Introduction"
+      },
+      "description": "Test section summary without title",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_summarize_article_section_no_section",
+      "tool": "summarize_article_section",
+      "arguments": {
+        "title": "Albert Einstein"
+      },
+      "description": "Test section summary without section_title",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_extract_key_facts_success",
+      "tool": "extract_key_facts",
+      "arguments": {
+        "title": "Marie Curie",
+        "count": 3
+      },
+      "description": "Test successful key facts extraction",
+      "expected_fields": ["title", "topic_within_article", "facts"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_extract_key_facts_with_topic",
+      "tool": "extract_key_facts",
+      "arguments": {
+        "title": "Marie Curie",
+        "topic_within_article": "Nobel Prize",
+        "count": 2
+      },
+      "description": "Test key facts extraction with specific topic",
+      "expected_fields": ["title", "topic_within_article", "facts"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_extract_key_facts_no_title",
+      "tool": "extract_key_facts",
+      "arguments": {
+        "count": 5
+      },
+      "description": "Test key facts extraction without title",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_extract_key_facts_invalid_count",
+      "tool": "extract_key_facts",
+      "arguments": {
+        "title": "Marie Curie",
+        "count": 25
+      },
+      "description": "Test key facts extraction with invalid count",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_get_related_topics_success",
+      "tool": "get_related_topics",
+      "arguments": {
+        "title": "Machine learning",
+        "limit": 5
+      },
+      "description": "Test successful related topics retrieval",
+      "expected_fields": ["title", "related_topics"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_get_related_topics_no_title",
+      "tool": "get_related_topics",
+      "arguments": {
+        "limit": 10
+      },
+      "description": "Test related topics without title",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_get_related_topics_invalid_limit",
+      "tool": "get_related_topics",
+      "arguments": {
+        "title": "Machine learning",
+        "limit": 100
+      },
+      "description": "Test related topics with invalid limit",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_get_sections_success",
+      "tool": "get_sections",
+      "arguments": {
+        "title": "Artificial intelligence"
+      },
+      "description": "Test successful sections retrieval",
+      "expected_fields": ["title", "sections"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_get_sections_no_title",
+      "tool": "get_sections",
+      "arguments": {},
+      "description": "Test sections retrieval without title",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_get_links_success",
+      "tool": "get_links",
+      "arguments": {
+        "title": "Computer science"
+      },
+      "description": "Test successful links retrieval",
+      "expected_fields": ["title", "links"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_get_links_no_title",
+      "tool": "get_links",
+      "arguments": {},
+      "description": "Test links retrieval without title",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_get_coordinates_success",
+      "tool": "get_coordinates",
+      "arguments": {
+        "title": "Paris"
+      },
+      "description": "Test successful coordinates retrieval for a geographic location",
+      "expected_fields": ["title", "exists"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_get_coordinates_no_title",
+      "tool": "get_coordinates",
+      "arguments": {},
+      "description": "Test coordinates retrieval without title",
+      "expected_fields": [],
+      "should_succeed": false
+    },
+    {
+      "name": "test_get_coordinates_no_location",
+      "tool": "get_coordinates",
+      "arguments": {
+        "title": "Programming"
+      },
+      "description": "Test coordinates retrieval for non-geographic article",
+      "expected_fields": ["title", "exists"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_search_wikipedia_default_limit",
+      "tool": "search_wikipedia",
+      "arguments": {
+        "query": "artificial intelligence"
+      },
+      "description": "Test search with default limit parameter",
+      "expected_fields": ["query", "results"],
+      "should_succeed": true
+    },
+    {
+      "name": "test_extract_key_facts_default_count",
+      "tool": "extract_key_facts",
+      "arguments": {
+        "title": "Charles Darwin"
+      },
+      "description": "Test key facts extraction with default count",
+      "expected_fields": ["title", "topic_within_article", "facts"],
+      "should_succeed": true
+    }
+  ]
+}

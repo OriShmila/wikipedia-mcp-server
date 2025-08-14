@@ -1,0 +1,356 @@
+{
+  "name": "WikipediaMCP",
+  "tools": [
+    {
+      "name": "search_wikipedia",
+      "description": "Search Wikipedia for articles matching a query.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The search query to find Wikipedia articles."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of search results to return.",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 10
+          }
+        },
+        "required": ["query"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Search results with matching Wikipedia articles",
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "snippet": { "type": "string" },
+                "pageid": { "type": "number" },
+                "wordcount": { "type": "number" },
+                "timestamp": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_article",
+      "description": "Get the full content of a Wikipedia article.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the Wikipedia article to retrieve."
+          }
+        },
+        "required": ["title"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Complete Wikipedia article content",
+        "properties": {
+          "title": { "type": "string" },
+          "pageid": { "type": "number" },
+          "summary": { "type": "string" },
+          "text": { "type": "string" },
+          "url": { "type": "string" },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "level": { "type": "number" },
+                "text": { "type": "string" },
+                "sections": { "type": "array" }
+              }
+            }
+          },
+          "categories": { "type": "array", "items": { "type": "string" } },
+          "links": { "type": "array", "items": { "type": "string" } },
+          "exists": { "type": "boolean" },
+          "error": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "get_summary",
+      "description": "Get a summary of a Wikipedia article.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the Wikipedia article to summarize."
+          }
+        },
+        "required": ["title"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Wikipedia article summary",
+        "properties": {
+          "title": { "type": "string" },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "summarize_article_for_query",
+      "description": "Get a summary of a Wikipedia article tailored to a specific query.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the Wikipedia article to summarize."
+          },
+          "query": {
+            "type": "string",
+            "description": "The specific query to focus the summary on."
+          },
+          "max_length": {
+            "type": "integer",
+            "description": "Maximum length of the summary.",
+            "minimum": 50,
+            "maximum": 1000,
+            "default": 250
+          }
+        },
+        "required": ["title", "query"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Query-focused article summary",
+        "properties": {
+          "title": { "type": "string" },
+          "query": { "type": "string" },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "summarize_article_section",
+      "description": "Get a summary of a specific section of a Wikipedia article.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the Wikipedia article."
+          },
+          "section_title": {
+            "type": "string",
+            "description": "The title of the section to summarize."
+          },
+          "max_length": {
+            "type": "integer",
+            "description": "Maximum length of the summary.",
+            "minimum": 50,
+            "maximum": 500,
+            "default": 150
+          }
+        },
+        "required": ["title", "section_title"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Section summary",
+        "properties": {
+          "title": { "type": "string" },
+          "section_title": { "type": "string" },
+          "summary": { "type": "string" }
+        }
+      }
+    },
+    {
+      "name": "extract_key_facts",
+      "description": "Extract key facts from a Wikipedia article, optionally focused on a topic.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the Wikipedia article."
+          },
+          "topic_within_article": {
+            "type": "string",
+            "description": "Optional topic/section to focus fact extraction on.",
+            "default": ""
+          },
+          "count": {
+            "type": "integer",
+            "description": "Number of key facts to extract.",
+            "minimum": 1,
+            "maximum": 20,
+            "default": 5
+          }
+        },
+        "required": ["title"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Key facts from the article",
+        "properties": {
+          "title": { "type": "string" },
+          "topic_within_article": { "type": "string" },
+          "facts": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_related_topics",
+      "description": "Get topics related to a Wikipedia article based on links and categories.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the Wikipedia article."
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of related topics to return.",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 10
+          }
+        },
+        "required": ["title"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Related topics from the article",
+        "properties": {
+          "title": { "type": "string" },
+          "related_topics": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "summary": { "type": "string" },
+                "url": { "type": "string" },
+                "type": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_sections",
+      "description": "Get the sections of a Wikipedia article.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the Wikipedia article."
+          }
+        },
+        "required": ["title"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Article sections",
+        "properties": {
+          "title": { "type": "string" },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "title": { "type": "string" },
+                "level": { "type": "number" },
+                "text": { "type": "string" },
+                "sections": { "type": "array" }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_links",
+      "description": "Get the links contained within a Wikipedia article.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the Wikipedia article."
+          }
+        },
+        "required": ["title"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Article links",
+        "properties": {
+          "title": { "type": "string" },
+          "links": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    {
+      "name": "get_coordinates",
+      "description": "Get the coordinates of a Wikipedia article.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "The title of the Wikipedia article."
+          }
+        },
+        "required": ["title"]
+      },
+      "outputSchema": {
+        "type": "object",
+        "description": "Geographic coordinates",
+        "properties": {
+          "title": { "type": "string" },
+          "pageid": { "type": ["number", "null"] },
+          "coordinates": {
+            "type": ["array", "null"],
+            "items": {
+              "type": "object",
+              "properties": {
+                "latitude": { "type": "number" },
+                "longitude": { "type": "number" },
+                "primary": { "type": "boolean" },
+                "globe": { "type": "string" },
+                "type": { "type": "string" },
+                "name": { "type": "string" },
+                "region": { "type": "string" },
+                "country": { "type": "string" }
+              }
+            }
+          },
+          "exists": { "type": "boolean" },
+          "error": { "type": ["string", "null"] },
+          "message": { "type": ["string", "null"] }
+        }
+      }
+    }
+  ]
+}
