@@ -1,0 +1,40 @@
+# Wikipedia MCP Server Development Rules
+
+## Parameter and Type Handling Rules
+
+### Input Parameters
+- **Schema**: All parameters should be marked as `required` in JSON schema
+- **Handlers**: Can have default values for optional parameters (e.g., `limit: int = 10`)
+- **Pattern**: Schema enforces explicit parameter passing, handlers provide sensible defaults
+
+### Output Field Types
+- **Nullable fields**: Use `["type", "null"]` only when data genuinely might not exist
+  - Example: `coordinates` for non-geographic articles
+  - Example: `pageid` when article doesn't exist
+- **Arrays**: Return empty array `[]` instead of `null` for missing collections
+  - Example: `links: []` when no links found
+- **Strings**: Return empty string `""` instead of `null` for missing text
+  - Example: `summary: ""` when no summary available
+
+### Schema Design Principles
+1. **Required vs Optional**: Make all input parameters required in schema, use handler defaults
+2. **Nullable vs Empty**: Only use nullable for fields that semantically represent "no data"
+3. **Consistency**: Arrays are always arrays (empty if no data), strings are always strings (empty if no data)
+
+### Example Pattern
+```typescript
+// Schema - all required
+"required": ["title", "query", "max_length"]
+
+// Handler - with defaults
+async def func(title: str, query: str, max_length: int = 250)
+
+// Output - nullable only when appropriate  
+"coordinates": { "type": ["array", "null"] }  // Can be null
+"links": { "type": "array" }                  // Always array, empty if no links
+```
+
+This approach provides:
+- Clear client expectations (all params required)
+- Flexible implementation (sensible defaults)
+- Predictable data types (nullable only when semantically correct)

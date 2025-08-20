@@ -413,27 +413,23 @@ class WikipediaClient:
         # Add variant parameter if needed
         params = self._add_variant_to_params(params)
 
-        try:
-            response = requests.get(self.api_url, params=params)
-            response.raise_for_status()
-            data = response.json()
+        response = requests.get(self.api_url, params=params)
+        response.raise_for_status()
+        data = response.json()
 
-            results = []
-            for item in data.get("query", {}).get("search", []):
-                results.append(
-                    {
-                        "title": item.get("title", ""),
-                        "snippet": item.get("snippet", ""),
-                        "pageid": item.get("pageid", 0),
-                        "wordcount": item.get("wordcount", 0),
-                        "timestamp": item.get("timestamp", ""),
-                    }
-                )
+        results = []
+        for item in data.get("query", {}).get("search", []):
+            results.append(
+                {
+                    "title": item.get("title", ""),
+                    "snippet": item.get("snippet", ""),
+                    "page_id": item.get("pageid", 0),
+                    "word_count": item.get("wordcount", 0),
+                    "timestamp": item.get("timestamp", ""),
+                }
+            )
 
-            return results
-        except Exception as e:
-            logger.error(f"Error searching Wikipedia: {e}")
-            return []
+        return results
 
     def get_article(self, title: str) -> Dict[str, Any]:
         """Get the full content of a Wikipedia article.
@@ -444,35 +440,31 @@ class WikipediaClient:
         Returns:
             A dictionary containing the article information.
         """
-        try:
-            page = self.wiki.page(title)
+        page = self.wiki.page(title)
 
-            if not page.exists():
-                return {"title": title, "exists": False, "error": "Page does not exist"}
+        if not page.exists():
+            raise ValueError(f"Page {title} does not exist")
 
-            # Get sections
-            sections = self._extract_sections(page.sections)
+        # Get sections
+        sections = self._extract_sections(page.sections)
 
-            # Get categories
-            categories = [cat for cat in page.categories.keys()]
+        # Get categories
+        categories = [cat for cat in page.categories.keys()]
 
-            # Get links
-            links = [link for link in page.links.keys()]
+        # Get links
+        links = [link for link in page.links.keys()]
 
-            return {
-                "title": page.title,
-                "pageid": page.pageid,
-                "summary": page.summary,
-                "text": page.text,
-                "url": page.fullurl,
-                "sections": sections,
-                "categories": categories,
-                "links": links[:100],  # Limit to 100 links to avoid too much data
-                "exists": True,
-            }
-        except Exception as e:
-            logger.error(f"Error getting Wikipedia article: {e}")
-            return {"title": title, "exists": False, "error": str(e)}
+        return {
+            "title": page.title,
+            "page_id": page.pageid,
+            "summary": page.summary,
+            "text": page.text,
+            "url": page.fullurl,
+            "sections": sections,
+            "categories": categories,
+            "links": links[:100],  # Limit to 100 links to avoid too much data
+            "exists": True,
+        }
 
     def get_summary(self, title: str) -> str:
         """Get a summary of a Wikipedia article.
@@ -483,16 +475,12 @@ class WikipediaClient:
         Returns:
             The article summary.
         """
-        try:
-            page = self.wiki.page(title)
+        page = self.wiki.page(title)
 
-            if not page.exists():
-                return f"No Wikipedia article found for '{title}'."
+        if not page.exists():
+            raise ValueError(f"Page {title} does not exist")
 
-            return page.summary
-        except Exception as e:
-            logger.error(f"Error getting Wikipedia summary: {e}")
-            return f"Error retrieving summary for '{title}': {str(e)}"
+        return page.summary
 
     def get_sections(self, title: str) -> List[Dict[str, Any]]:
         """Get the sections of a Wikipedia article.
@@ -503,16 +491,12 @@ class WikipediaClient:
         Returns:
             A list of sections.
         """
-        try:
-            page = self.wiki.page(title)
+        page = self.wiki.page(title)
 
-            if not page.exists():
-                return []
+        if not page.exists():
+            raise ValueError(f"Page {title} does not exist")
 
-            return self._extract_sections(page.sections)
-        except Exception as e:
-            logger.error(f"Error getting Wikipedia sections: {e}")
-            return []
+        return self._extract_sections(page.sections)
 
     def get_links(self, title: str) -> List[str]:
         """Get the links in a Wikipedia article.
@@ -523,16 +507,12 @@ class WikipediaClient:
         Returns:
             A list of links.
         """
-        try:
-            page = self.wiki.page(title)
+        page = self.wiki.page(title)
 
-            if not page.exists():
-                return []
+        if not page.exists():
+            raise ValueError(f"Page {title} does not exist")
 
-            return [link for link in page.links.keys()]
-        except Exception as e:
-            logger.error(f"Error getting Wikipedia links: {e}")
-            return []
+        return [link for link in page.links.keys()]
 
     def get_related_topics(self, title: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get topics related to a Wikipedia article based on links and categories.
@@ -544,51 +524,47 @@ class WikipediaClient:
         Returns:
             A list of related topics.
         """
-        try:
-            page = self.wiki.page(title)
+        page = self.wiki.page(title)
 
-            if not page.exists():
-                return []
+        if not page.exists():
+            raise ValueError(f"Page {title} does not exist")
 
-            # Get links from the page
-            links = list(page.links.keys())
+        # Get links from the page
+        links = list(page.links.keys())
 
-            # Get categories
-            categories = list(page.categories.keys())
+        # Get categories
+        categories = list(page.categories.keys())
 
-            # Combine and limit
-            related = []
+        # Combine and limit
+        related = []
 
-            # Add links first
-            for link in links[:limit]:
-                link_page = self.wiki.page(link)
-                if link_page.exists():
-                    related.append(
-                        {
-                            "title": link,
-                            "summary": link_page.summary[:200] + "..."
-                            if len(link_page.summary) > 200
-                            else link_page.summary,
-                            "url": link_page.fullurl,
-                            "type": "link",
-                        }
-                    )
+        # Add links first
+        for link in links[:limit]:
+            link_page = self.wiki.page(link)
+            if link_page.exists():
+                related.append(
+                    {
+                        "title": link,
+                        "summary": link_page.summary[:200] + "..."
+                        if len(link_page.summary) > 200
+                        else link_page.summary,
+                        "url": link_page.fullurl,
+                        "type": "link",
+                    }
+                )
 
-                if len(related) >= limit:
-                    break
+            if len(related) >= limit:
+                break
 
-            # Add categories if we still have room
-            remaining = limit - len(related)
-            if remaining > 0:
-                for category in categories[:remaining]:
-                    # Remove "Category:" prefix if present
-                    clean_category = category.replace("Category:", "")
-                    related.append({"title": clean_category, "type": "category"})
+        # Add categories if we still have room
+        remaining = limit - len(related)
+        if remaining > 0:
+            for category in categories[:remaining]:
+                # Remove "Category:" prefix if present
+                clean_category = category.replace("Category:", "")
+                related.append({"title": clean_category, "type": "category"})
 
-            return related
-        except Exception as e:
-            logger.error(f"Error getting related topics: {e}")
-            return []
+        return related
 
     def _extract_sections(self, sections, level=0) -> List[Dict[str, Any]]:
         """Extract sections recursively.
@@ -626,47 +602,42 @@ class WikipediaClient:
         Returns:
             A query-focused summary.
         """
-        try:
-            page = self.wiki.page(title)
-            if not page.exists():
-                return f"No Wikipedia article found for '{title}'."
+        page = self.wiki.page(title)
+        if not page.exists():
+            raise ValueError(f"Page {title} does not exist")
 
-            text_content = page.text
-            query_lower = query.lower()
-            text_lower = text_content.lower()
+        text_content = page.text
+        query_lower = query.lower()
+        text_lower = text_content.lower()
 
-            start_index = text_lower.find(query_lower)
-            if start_index == -1:
-                # If query not found, return the beginning of the summary or article text
-                summary_part = page.summary[:max_length]
-                if not summary_part:
-                    summary_part = text_content[:max_length]
-                return (
-                    summary_part + "..."
-                    if len(summary_part) >= max_length
-                    else summary_part
-                )
-
-            # Try to get context around the query
-            context_start = max(0, start_index - (max_length // 2))
-            context_end = min(
-                len(text_content), start_index + len(query) + (max_length // 2)
-            )
-
-            snippet = text_content[context_start:context_end]
-
-            if len(snippet) > max_length:
-                snippet = snippet[:max_length]
-
+        start_index = text_lower.find(query_lower)
+        if start_index == -1:
+            # If query not found, return the beginning of the summary or article text
+            summary_part = page.summary[:max_length]
+            if not summary_part:
+                summary_part = text_content[:max_length]
             return (
-                snippet + "..."
-                if len(snippet) >= max_length or context_end < len(text_content)
-                else snippet
+                summary_part + "..."
+                if len(summary_part) >= max_length
+                else summary_part
             )
 
-        except Exception as e:
-            logger.error(f"Error generating query-focused summary for '{title}': {e}")
-            return f"Error generating query-focused summary for '{title}': {str(e)}"
+        # Try to get context around the query
+        context_start = max(0, start_index - (max_length // 2))
+        context_end = min(
+            len(text_content), start_index + len(query) + (max_length // 2)
+        )
+
+        snippet = text_content[context_start:context_end]
+
+        if len(snippet) > max_length:
+            snippet = snippet[:max_length]
+
+        return (
+            snippet + "..."
+            if len(snippet) >= max_length or context_end < len(text_content)
+            else snippet
+        )
 
     def summarize_section(
         self, title: str, section_title: str, max_length: int = 150
@@ -682,39 +653,32 @@ class WikipediaClient:
         Returns:
             A summary of the specified section.
         """
-        try:
-            page = self.wiki.page(title)
-            if not page.exists():
-                return f"No Wikipedia article found for '{title}'."
+        page = self.wiki.page(title)
+        if not page.exists():
+            raise ValueError(f"Page {title} does not exist")
 
-            target_section = None
+        target_section = None
 
-            # Helper function to find the section
-            def find_section_recursive(sections_list, target_title):
-                for sec in sections_list:
-                    if sec.title.lower() == target_title.lower():
-                        return sec
-                    # Check subsections
-                    found_in_subsection = find_section_recursive(
-                        sec.sections, target_title
-                    )
-                    if found_in_subsection:
-                        return found_in_subsection
-                return None
+        # Helper function to find the section
+        def find_section_recursive(sections_list, target_title):
+            for sec in sections_list:
+                if sec.title.lower() == target_title.lower():
+                    return sec
+                # Check subsections
+                found_in_subsection = find_section_recursive(sec.sections, target_title)
+                if found_in_subsection:
+                    return found_in_subsection
+            return None
 
-            target_section = find_section_recursive(page.sections, section_title)
+        target_section = find_section_recursive(page.sections, section_title)
 
-            if not target_section or not target_section.text:
-                return f"Section '{section_title}' not found or is empty in article '{title}'."
-
-            summary = target_section.text[:max_length]
-            return summary + "..." if len(target_section.text) > max_length else summary
-
-        except Exception as e:
-            logger.error(
-                f"Error summarizing section '{section_title}' for article '{title}': {e}"
+        if not target_section or not target_section.text:
+            raise ValueError(
+                f"Section '{section_title}' not found or is empty in article '{title}'."
             )
-            return f"Error summarizing section '{section_title}': {str(e)}"
+
+        summary = target_section.text[:max_length]
+        return summary + "..." if len(target_section.text) > max_length else summary
 
     def extract_facts(
         self, title: str, topic_within_article: Optional[str] = None, count: int = 5
@@ -800,83 +764,58 @@ class WikipediaClient:
         # Add variant parameter if needed
         params = self._add_variant_to_params(params)
 
-        try:
-            response = requests.get(self.api_url, params=params)
-            response.raise_for_status()
-            data = response.json()
+        response = requests.get(self.api_url, params=params)
+        response.raise_for_status()
+        data = response.json()
 
-            pages = data.get("query", {}).get("pages", {})
+        pages = data.get("query", {}).get("pages", {})
 
-            if not pages:
-                return {
-                    "title": title,
-                    "coordinates": None,
-                    "exists": False,
-                    "error": "No page found",
-                }
+        if not pages:
+            raise ValueError(f"No page found for {title}")
 
-            # Get the first (and typically only) page
-            page_data = next(iter(pages.values()))
+        # Get the first (and typically only) page
+        page_data = next(iter(pages.values()))
 
-            # Check if page exists (pageid > 0 means page exists)
-            if page_data.get("pageid", -1) < 0:
-                return {
-                    "title": title,
-                    "coordinates": None,
-                    "exists": False,
-                    "error": "Page does not exist",
-                }
+        # Check if page exists (pageid > 0 means page exists)
+        if page_data.get("pageid", -1) < 0:
+            raise ValueError(f"Page {title} does not exist")
 
-            coordinates = page_data.get("coordinates", [])
+        coordinates = page_data.get("coordinates", [])
 
-            if not coordinates:
-                return {
-                    "title": page_data.get("title", title),
-                    "pageid": page_data.get("pageid"),
-                    "coordinates": None,
-                    "exists": True,
-                    "error": None,
-                    "message": "No coordinates available for this article",
-                }
-
-            # Process coordinates - typically there's one primary coordinate
-            processed_coordinates = []
-            for coord in coordinates:
-                # Ensure primary is boolean
-                primary_val = coord.get("primary", False)
-                if isinstance(primary_val, str):
-                    primary_val = (
-                        primary_val.lower() in ("true", "1", "yes")
-                        if primary_val
-                        else False
-                    )
-
-                processed_coordinates.append(
-                    {
-                        "latitude": coord.get("lat"),
-                        "longitude": coord.get("lon"),
-                        "primary": bool(primary_val),
-                        "globe": coord.get("globe", "earth") or "earth",
-                        "type": coord.get("type", "") or "",
-                        "name": coord.get("name", "") or "",
-                        "region": coord.get("region", "") or "",
-                        "country": coord.get("country", "") or "",
-                    }
-                )
-
+        if not coordinates:
             return {
                 "title": page_data.get("title", title),
-                "pageid": page_data.get("pageid"),
-                "coordinates": processed_coordinates,
-                "exists": True,
-                "error": None,
+                "page_id": page_data.get("pageid"),
+                "coordinates": [],
             }
 
-        except Exception as e:
-            logger.error(f"Error getting coordinates for Wikipedia article: {e}")
-            return {
-                "title": title,
-                "coordinates": None,
-                "exists": False,
-                "error": str(e),
-            }
+        # Process coordinates - typically there's one primary coordinate
+        processed_coordinates = []
+        for coord in coordinates:
+            # Ensure primary is boolean
+            primary_val = coord.get("primary", False)
+            if isinstance(primary_val, str):
+                primary_val = (
+                    primary_val.lower() in ("true", "1", "yes")
+                    if primary_val
+                    else False
+                )
+
+            processed_coordinates.append(
+                {
+                    "latitude": coord.get("lat"),
+                    "longitude": coord.get("lon"),
+                    "primary": bool(primary_val),
+                    "globe": coord.get("globe", "earth") or "earth",
+                    "type": coord.get("type", "") or "",
+                    "name": coord.get("name", "") or "",
+                    "region": coord.get("region", "") or "",
+                    "country": coord.get("country", "") or "",
+                }
+            )
+
+        return {
+            "title": page_data.get("title", title),
+            "page_id": page_data.get("pageid"),
+            "coordinates": processed_coordinates,
+        }

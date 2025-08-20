@@ -10,13 +10,6 @@
           "query": {
             "type": "string",
             "description": "The search query to find Wikipedia articles."
-          },
-          "limit": {
-            "type": "integer",
-            "description": "Maximum number of search results to return.",
-            "minimum": 1,
-            "maximum": 50,
-            "default": 10
           }
         },
         "required": ["query"]
@@ -35,13 +28,21 @@
               "properties": {
                 "title": { "type": "string" },
                 "snippet": { "type": "string" },
-                "pageid": { "type": "number" },
-                "wordcount": { "type": "number" },
+                "page_id": { "type": "number" },
+                "word_count": { "type": "number" },
                 "timestamp": { "type": "string" }
-              }
+              },
+              "required": [
+                "title",
+                "snippet",
+                "page_id",
+                "word_count",
+                "timestamp"
+              ]
             }
           }
-        }
+        },
+        "required": ["query", "results"]
       }
     },
     {
@@ -62,7 +63,7 @@
         "description": "Complete Wikipedia article content",
         "properties": {
           "title": { "type": "string" },
-          "pageid": { "type": "number" },
+          "page_id": { "type": "number" },
           "summary": { "type": "string" },
           "text": { "type": "string" },
           "url": { "type": "string" },
@@ -75,14 +76,23 @@
                 "level": { "type": "number" },
                 "text": { "type": "string" },
                 "sections": { "type": "array" }
-              }
+              },
+              "required": ["title", "level", "text", "sections"]
             }
           },
           "categories": { "type": "array", "items": { "type": "string" } },
-          "links": { "type": "array", "items": { "type": "string" } },
-          "exists": { "type": "boolean" },
-          "error": { "type": "string" }
-        }
+          "links": { "type": "array", "items": { "type": "string" } }
+        },
+        "required": [
+          "title",
+          "page_id",
+          "summary",
+          "text",
+          "url",
+          "sections",
+          "categories",
+          "links"
+        ]
       }
     },
     {
@@ -104,7 +114,8 @@
         "properties": {
           "title": { "type": "string" },
           "summary": { "type": "string" }
-        }
+        },
+        "required": ["title", "summary"]
       }
     },
     {
@@ -125,11 +136,10 @@
             "type": "integer",
             "description": "Maximum length of the summary.",
             "minimum": 50,
-            "maximum": 1000,
-            "default": 250
+            "maximum": 1000
           }
         },
-        "required": ["title", "query"]
+        "required": ["title", "query", "max_length"]
       },
       "outputSchema": {
         "type": "object",
@@ -138,7 +148,8 @@
           "title": { "type": "string" },
           "query": { "type": "string" },
           "summary": { "type": "string" }
-        }
+        },
+        "required": ["title", "query", "summary"]
       }
     },
     {
@@ -159,11 +170,10 @@
             "type": "integer",
             "description": "Maximum length of the summary.",
             "minimum": 50,
-            "maximum": 500,
-            "default": 150
+            "maximum": 500
           }
         },
-        "required": ["title", "section_title"]
+        "required": ["title", "section_title", "max_length"]
       },
       "outputSchema": {
         "type": "object",
@@ -172,7 +182,8 @@
           "title": { "type": "string" },
           "section_title": { "type": "string" },
           "summary": { "type": "string" }
-        }
+        },
+        "required": ["title", "section_title", "summary"]
       }
     },
     {
@@ -186,19 +197,11 @@
             "description": "The title of the Wikipedia article."
           },
           "topic_within_article": {
-            "type": "string",
-            "description": "Optional topic/section to focus fact extraction on.",
-            "default": ""
-          },
-          "count": {
-            "type": "integer",
-            "description": "Number of key facts to extract.",
-            "minimum": 1,
-            "maximum": 20,
-            "default": 5
+            "type": ["string", "null"],
+            "description": "Topic/section to focus fact extraction on."
           }
         },
-        "required": ["title"]
+        "required": ["title", "topic_within_article"]
       },
       "outputSchema": {
         "type": "object",
@@ -210,7 +213,8 @@
             "type": "array",
             "items": { "type": "string" }
           }
-        }
+        },
+        "required": ["title", "topic_within_article", "facts"]
       }
     },
     {
@@ -222,13 +226,6 @@
           "title": {
             "type": "string",
             "description": "The title of the Wikipedia article."
-          },
-          "limit": {
-            "type": "integer",
-            "description": "Maximum number of related topics to return.",
-            "minimum": 1,
-            "maximum": 50,
-            "default": 10
           }
         },
         "required": ["title"]
@@ -250,7 +247,8 @@
               }
             }
           }
-        }
+        },
+        "required": ["title", "related_topics"]
       }
     },
     {
@@ -280,10 +278,12 @@
                 "level": { "type": "number" },
                 "text": { "type": "string" },
                 "sections": { "type": "array" }
-              }
+              },
+              "required": ["title", "level", "text", "sections"]
             }
           }
-        }
+        },
+        "required": ["title", "sections"]
       }
     },
     {
@@ -308,7 +308,8 @@
             "type": "array",
             "items": { "type": "string" }
           }
-        }
+        },
+        "required": ["title", "links"]
       }
     },
     {
@@ -329,9 +330,9 @@
         "description": "Geographic coordinates",
         "properties": {
           "title": { "type": "string" },
-          "pageid": { "type": ["number", "null"] },
+          "page_id": { "type": "number" },
           "coordinates": {
-            "type": ["array", "null"],
+            "type": "array",
             "items": {
               "type": "object",
               "properties": {
@@ -343,13 +344,21 @@
                 "name": { "type": "string" },
                 "region": { "type": "string" },
                 "country": { "type": "string" }
-              }
+              },
+              "required": [
+                "latitude",
+                "longitude",
+                "primary",
+                "globe",
+                "type",
+                "name",
+                "region",
+                "country"
+              ]
             }
-          },
-          "exists": { "type": "boolean" },
-          "error": { "type": ["string", "null"] },
-          "message": { "type": ["string", "null"] }
-        }
+          }
+        },
+        "required": ["title", "page_id", "coordinates"]
       }
     }
   ]

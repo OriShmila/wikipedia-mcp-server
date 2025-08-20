@@ -61,7 +61,7 @@ async def get_summary(title: str) -> Dict[str, Any]:
 
 
 async def summarize_article_for_query(
-    title: str, query: str, max_length: int = 250
+    title: str, query: str, max_length: int
 ) -> Dict[str, Any]:
     """Get a summary of a Wikipedia article tailored to a specific query."""
     if not title:
@@ -69,6 +69,9 @@ async def summarize_article_for_query(
 
     if not query:
         raise ValueError("query is required")
+
+    if not max_length:
+        raise ValueError("max_length is required")
 
     if max_length < 50 or max_length > 1000:
         raise ValueError("max_length must be between 50 and 1000")
@@ -87,7 +90,7 @@ async def summarize_article_for_query(
 
 
 async def summarize_article_section(
-    title: str, section_title: str, max_length: int = 150
+    title: str, section_title: str, max_length: int
 ) -> Dict[str, Any]:
     """Get a summary of a specific section of a Wikipedia article."""
     if not title:
@@ -95,6 +98,9 @@ async def summarize_article_section(
 
     if not section_title:
         raise ValueError("section_title is required")
+
+    if not max_length:
+        raise ValueError("max_length is required")
 
     if max_length < 50 or max_length > 500:
         raise ValueError("max_length must be between 50 and 500")
@@ -111,7 +117,7 @@ async def summarize_article_section(
 
 
 async def extract_key_facts(
-    title: str, topic_within_article: str = "", count: int = 5
+    title: str, topic_within_article: str, count: int = 10
 ) -> Dict[str, Any]:
     """Extract key facts from a Wikipedia article, optionally focused on a topic."""
     if not title:
@@ -124,12 +130,12 @@ async def extract_key_facts(
         logger.info(
             f"Extracting key facts for article: {title}, topic: {topic_within_article}"
         )
-        # Convert empty string to None for backward compatibility
+        # Use topic_within_article as provided (now required)
         topic = topic_within_article if topic_within_article.strip() else None
         facts = wikipedia_client.extract_facts(title, topic, count=count)
         return {
             "title": title,
-            "topic_within_article": topic_within_article,
+            "topic_within_article": topic_within_article or "",
             "facts": facts,
         }
     except Exception as e:
